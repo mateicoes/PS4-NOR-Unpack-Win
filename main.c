@@ -9,6 +9,8 @@
 
 #define BLOCK_SIZE 0x200
 
+#pragma pack(push,1)
+
 unsigned char active;
 
 typedef struct {
@@ -95,12 +97,12 @@ void unpack(master_block_v4_t *master, char* input, char* output){
 		partition_t *p = &master->partitions[i];
 		printf("Partition %lu,  off=0x%08x, sz=0x%08x, flag1=0x%02x, flag2=0x%02x\n",i,  p->start_lba, p->n_sectors, p->flag1, p->flag2);
 		sprintf(buffer2,"%s/%s-%d",output,part_code(p->flag1),p->flag2);
-		printf("Unpacking partition %li  offset 0x%lx size 0x%lx to %s\n", i, (uint64_t)p->start_lba * BLOCK_SIZE, (uint64_t)p->n_sectors * BLOCK_SIZE, buffer2);
+		printf("Unpacking partition %lu  offset 0x%lx size 0x%lx to %s\n", i, p->start_lba * BLOCK_SIZE, p->n_sectors * BLOCK_SIZE, buffer2);
 		
 		unsigned char * buffer = (unsigned char *) malloc (p->n_sectors * BLOCK_SIZE);
 		FILE *fp = fopen(input,"rb");
 		uint64_t total = (uint64_t)(p->start_lba * BLOCK_SIZE);
-		fseeko(fp,0x2000 + ((active/0x80) * 0x1000) + total,SEEK_SET);
+		fseek(fp,0x2000 + ((active/0x80) * 0x1000) + total,SEEK_SET);
 		fread(buffer,(p->n_sectors * BLOCK_SIZE),1,fp);
 		fclose(fp);
 		FILE *fl = fopen(buffer2, "wb");
@@ -138,7 +140,7 @@ int main(int argc, char *argv[]){
 	fclose(fp);
 	
 	rmdir(argv[2]);
-	mkdir(argv[2],S_IRWXU);
+	mkdir(argv[2]);
 	
 	unpack(&master,argv[1],argv[2]);
 
